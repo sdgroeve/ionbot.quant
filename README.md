@@ -30,6 +30,6 @@ This will quantify al identified peptides and proteins with the Matching Between
 
 ### TODO
 
- - Still many "no quantification" results. 
+ - Still some "no quantification" results. 
  - Currently, ionbot.quant only uses the first matches for quantification. Should be easy to add the
    co-eluting.
