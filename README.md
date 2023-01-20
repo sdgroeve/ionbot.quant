@@ -10,6 +10,19 @@ Install FlashLFQ as a docker image:
 
 ### USAGE
 
+'''
+usage: ionbot2FlashLFQ.py [-h] [-x] folder [folder ...]
+
+ionbot.quant: conver ionbot result files to FlashLFQ input file
+
+positional arguments:
+  folder      folder with ionbot results
+
+optional arguments:
+  -h, --help  show this help message and exit
+  -x          don't filter matches with unexpected modification
+'''
+
 Each sample in an experiment is searched by ionbot with all fractions of the same sample in one search (to allow for correct protein inference).
 
 Let's say we have ionbot results for an experiment with 3 samples in folders /sample1, /sample2 and /sample3. 
