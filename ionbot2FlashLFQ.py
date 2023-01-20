@@ -1,5 +1,6 @@
-from dataclasses import replace
 import sys
+import os
+import argparse
 import pandas as pd
 
 def is_unlocalized(x):
@@ -30,27 +31,42 @@ def is_not_shared(x):
 def remove_extension(x):
     return ".".join(x.split(".")[:-1])
 
-def add_delta_mass(x):
-    if "unknown modification" in x["modifications"]:
-        delta_mass = x["peptide_mass"] - x["precursor_mass"]
-        return x["modifications"].replace("unknown modification","unknown_modification_%s"%str(delta_mass))
+def contains_unknown_modification(x):
+    if str(x) == "nan":
+        return False
+    return "unknown modification" in x
+
+def dir_path(string):
+    if os.path.isdir(string):
+        return string
     else:
-        return x["modifications"]
+        raise NotADirectoryError(string)
+
+parser = argparse.ArgumentParser(description='ionbot.quant: conver ionbot result files to FlashLFQ input file')
+parser.add_argument('-x', action="store_true", dest="do_not_filter",
+                    help="don't filter matches with unexpected modification")
+parser.add_argument('folder', type=dir_path, nargs='+',help='folder with ionbot results')
+args = parser.parse_args()
 
 d = []
-for fn in sys.argv[1:]:
-    data = pd.read_csv(fn)
+for fn in args.folder:
+    #ionbot results are filtered for identified matches (q-value<=0.01) that don't contain an unknown modification
+    data = pd.read_csv(fn+"/ionbot.first.csv")
     data = data[(data["q-value"] <= 0.01) & (data["database"] == "T")]
-    data["modifications"].fillna("",inplace=True)
-    data["modifications"] = data.apply(add_delta_mass,axis=1)
-    data["Full Sequence"] = data["matched_peptide"] + data["modifications"].astype(str)
+    data["contains_unknown_modification"] = data["modifications"].apply(contains_unknown_modification)
+    data = data[data["contains_unknown_modification"]==False]
+    print(len(data))
+    if args.do_not_filter == False:
+        data = data[data["unexpected_modification"].isnull()]
     print(len(data))
 
+    data["modifications"].fillna("",inplace=True)
+    data["Full Sequence"] = data["matched_peptide"] + data["modifications"].astype(str)
 
     # the proteins inference result file is used to:
     # - remove peptides shared between protein groups
     # - remove proteins not identified at 1% FDR
-    proteins = pd.read_csv(fn.replace(".csv",".proteins.csv"))
+    proteins = pd.read_csv(fn+"/ionbot.first.proteins.csv")
     proteins = proteins[proteins["protein_group_q-value"]<=0.01]
     proteins = proteins[proteins["is_shared_peptide"]==False]
     not_shared_psms = list(proteins["ionbot_match_id"].unique())
@@ -60,7 +76,6 @@ for fn in sys.argv[1:]:
 
     data["not_shared"] = data["ionbot_match_id"].apply(is_not_shared)
     data = data[data["not_shared"]==True]
-    print(len(data))
 
     tmp = pd.DataFrame()
     tmp["Scan Retention Time"] = data["observed_retention_time"] / 60
@@ -72,13 +87,8 @@ for fn in sys.argv[1:]:
     tmp["File Name"] = data["spectrum_file"].apply(remove_extension)
 
     d.append(tmp)
-    break
 
-# For PSMs with an unlocalized modification ('x') I use the median
-# of all precursor masses for each such peptidoform.
-# FlashLFQ does not accept peptidoforms with different masses.
 data = pd.concat(d)
-data["Peptide Monoisotopic Mass"] = data.groupby("Full Sequence")["Peptide Monoisotopic Mass"].transform('median')
 
 data.to_csv("flashlfq.tsv",sep="\t",index=False)
                 
