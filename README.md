@@ -17,7 +17,7 @@ Then the following script parses the ionbot.first.csv (ionbot.first.proteins.csv
 
     python ionbot2FlashLFQ.py sample*/ionbot.first.csv
 
-This script filters for identified PSMs (q-value < 0.01) and writes a `flashlfq.tsv` result file suitable for quantification by FlashLFQ. The `Peptide Monoisotopic Mass` column is set to the calculated mass for all peptidoforms except those with an unlocalized modification (present in MS1 but not in MS2), where it uses the median precursor mass for each such peptidform over all samples (this is required by FlashLFQ as all `Peptide Monoisotopic Mass` values should be the same for each peptidoform.
+This script filters for identified PSMs (q-value <= 0.01) not shared between protein groups (read from the ionbot.first.proteins.csv files) and writes a `flashlfq.tsv` result file suitable for quantification by FlashLFQ. The `Peptide Monoisotopic Mass` column is set to the calculated mass for all peptidoforms except those with an unlocalized modification (present in MS1 but not in MS2), where it uses the median precursor mass for each such peptidform over all samples (this is required by FlashLFQ as all `Peptide Monoisotopic Mass` values should be the same for each peptidoform.
 
 The `File Name` column in `flashlfq.tsv` points to the spectrum file (can be a fraction) in which the PSM was identified (FlashLFQ in linux reads .mzML files for matching M1 data).
 
