@@ -44,7 +44,7 @@ def dir_path(string):
 
 parser = argparse.ArgumentParser(description='ionbot.quant: conver ionbot result files to FlashLFQ input file')
 parser.add_argument('-x', action="store_true", dest="do_not_filter",
-                    help="don't filter matches with unexpected modification")
+                    help="don't filter peptide matches with unexpected modification")
 parser.add_argument('folder', type=dir_path, nargs='+',help='folder with ionbot results')
 args = parser.parse_args()
 
