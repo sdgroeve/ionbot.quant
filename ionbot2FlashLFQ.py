@@ -12,7 +12,7 @@ def is_unlocalized(x):
     return False
 
 def get_mass(x):
-    return x["precursor_mass"]
+    return x["peptide_mass"]
 
 def get_proteins(x):
     tmp = x.split('||')
